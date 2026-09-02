@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lost & Found — Shape Location Memory</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f4f4f4;color:#202124}.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}.card{width:min(720px,100%);background:#fff;border-radius:20px;padding:24px;box-shadow:0 8px 28px #0001;text-align:center}h1{margin:0 0 8px}p{line-height:1.45}.stats{display:flex;justify-content:center;gap:30px;margin:14px}.stats b{font-size:22px}.stats small{display:block;color:#777;text-transform:uppercase;font-size:11px}.board{display:grid;gap:8px;justify-content:center;margin:20px auto;touch-action:manipulation}.cell{width:76px;height:76px;border:2px solid #ddd;border-radius:12px;display:flex;align-items:center;justify-content:center}.shape{width:40px;height:40px}.circle{border-radius:50%}.square{border-radius:6px}.triangle{width:0;height:0;border-left:21px solid transparent;border-right:21px solid transparent;border-bottom:40px solid currentColor}.diamond{width:32px;height:32px;transform:rotate(45deg)}.star{clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 96%,50% 72%,21% 96%,32% 57%,2% 35%,39% 35%)}.cross{position:relative}.cross:before,.cross:after{content:"";position:absolute;background:currentColor}.cross:before{width:40px;height:12px;top:14px}.cross:after{width:12px;height:40px;left:14px}button{border:0;border-radius:12px;padding:13px 24px;font-size:17px;font-weight:700;background:#222;color:white;cursor:pointer}.hidden{display:none}.message{min-height:28px;font-weight:650}.result{font-size:56px;font-weight:800;margin:12px}.lives{letter-spacing:5px}.note{font-size:13px;color:#666}.cell.clickable{cursor:pointer}.cell.clickable:active{transform:scale(.96)}
+</style></head><body><div class="wrap"><main class="card">
+<section id="intro"><h1>Lost &amp; Found</h1><p>Study which symbol sits where. The symbols then disappear. Tap the cell where the requested symbol was located.</p><p>Each successful round adds one more symbol. You have <b>3 lives</b>.</p><button id="start">Start</button></section>
+<section id="game" class="hidden"><div class="stats"><div><small>Shapes</small><b id="n">3</b></div><div><small>Max shapes</small><b id="max">0</b></div><div><small>Lives</small><b class="lives" id="lives">♥♥♥</b></div></div><div class="message" id="message"></div><div class="board" id="board"></div></section>
+<section id="results" class="hidden"><h1>Finished</h1><div class="result" id="final">0</div><p><b>Maximum number of shapes remembered</b></p><p id="summary"></p><button id="again">Try again</button><p class="note">Original browser implementation of a spatial feature-binding memory task; not a standardized diagnostic test.</p></section>
+</main></div>
+<script>
+const COLORS=['#e53935','#1e88e5','#43a047','#8e24aa','#fb8c00','#fbc02d','#e91e63','#795548'];
+const SHAPES=['circle','square','triangle','diamond','star','cross'];
+let round=0,maxShapes=0,lives=3,items=[];const board=document.querySelector('#board');
+const $=s=>document.querySelector(s);function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function shapeHTML(x){return `<div class="shape ${x.shape}" style="color:${x.color};background:${['triangle','cross'].includes(x.shape)?'transparent':x.color}"></div>`}
+function start(){round=0;maxShapes=0;lives=3;$('#intro').classList.add('hidden');$('#results').classList.add('hidden');$('#game').classList.remove('hidden');nextRound()}
+function nextRound(){round++;const n=round+2;$('#n').textContent=n;$('#max').textContent=maxShapes;$('#lives').textContent='♥'.repeat(lives)+'♡'.repeat(3-lives);$('#message').textContent='Memorize the shapes and their locations.';let cells=[...Array(16).keys()].sort(()=>Math.random()-.5);items=[];let used=new Set();for(let i=0;i<n;i++){let cell=cells[i], key;do{key=pick(SHAPES)+'|'+pick(COLORS)}while(used.has(key));used.add(key);let [shape,color]=key.split('|');items.push({shape,color,cell})}renderStudy();setTimeout(hideAndAsk,1800+n*180)}
+function renderStudy(){board.style.gridTemplateColumns='repeat(4,76px)';board.innerHTML='';for(let i=0;i<16;i++){let x=items.find(o=>o.cell===i);board.innerHTML+=`<div class="cell">${x?shapeHTML(x):''}</div>`}}
+function hideAndAsk(){const target=pick(items);$('#message').innerHTML=`Where was the <b>${target.shape}</b> (${target.color} symbol) located?`;board.innerHTML='';for(let i=0;i<16;i++){let c=document.createElement('div');c.className='cell clickable';c.dataset.cell=i;c.onclick=()=>answer(+c.dataset.cell,target);board.appendChild(c)}}
+function answer(cell,target){if(cell===target.cell){maxShapes=Math.max(maxShapes,round+2);$('#message').textContent='Correct!';setTimeout(nextRound,500)}else{lives--;$('#lives').textContent='♥'.repeat(lives)+'♡'.repeat(3-lives);if(lives<=0){finish()}else{$('#message').textContent='Incorrect — next round.';setTimeout(nextRound,600)}}}
+function finish(){$('#game').classList.add('hidden');$('#results').classList.remove('hidden');$('#final').textContent=maxShapes;$('#summary').textContent=`You reached ${maxShapes} shapes before losing all 3 lives.`}
+$('#start').onclick=start;$('#again').onclick=start;
+</script></body></html>
